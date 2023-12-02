@@ -2,42 +2,379 @@
 title: "Projeto Final Inferência e Análise de Regressão"
 author: "Matheus Ramos Esteves"
 date: "2023-12-01"
-output: html_document
+output: 
+  html_document:
+    highlight: textmate
+    includes:
+      in_header: "header.html"
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_float: 
+      collapsed: yes
+      smooth_scroll: no    
 ---
-## 1 Motivação
+
+# Motivação
 
 Este projeto tem por finalidade realizar uma regressão linear múltipla, e encontrar o melhor modelo possível para a mesma e assim aplicar os conceitos aprendidos em aula durante o segundo semestre de 2023, na turma de IAR (Inferência e Análise de Regressão), ministrada pela Profa. Dra. Flávia cristina Martins Queiroz Mariano.
 
-## 2 Dados utilizados
+# Dados utilizados
 
 O conjunto de dados escolhido são referentes aos da temporada 2022-2023 da NBA (*National Basketball Association*), que contém informações referentes a todos os jogadores da liga, como:
 
-- Total de pontos feito pelo jogador na temporada;
-- Idade do jogador;
-- Time que joga;
-- Quantidade de bloqueios do jogador;
-- Quantidade de *turnovers* do jogador;
-- Quantidade de lances livres do jogador;
-- Quantidade de jogos jogados;
-- Quantidade de faltas cometidas;
+-   Total de pontos feito pelo jogador na temporada;
+-   Idade do jogador;
+-   Time que joga;
+-   Quantidade de bloqueios do jogador;
+-   Quantidade de *turnovers* do jogador;
+-   Quantidade de lances livres do jogador;
+-   Quantidade de jogos jogados;
+-   Quantidade de faltas cometidas;
 
-Tanto a base de dados para download, quanto mais informações sobre a mesma, podem ser encontradas no link a seguir: 
-[Link da Base de Dados](https://www.kaggle.com/datasets/amirhosseinmirzaie/nba-players-stats2023-season).  
+Tanto a base de dados para download, quanto mais informações sobre a mesma, podem ser encontradas no link a seguir: [Link da Base de Dados](https://www.kaggle.com/datasets/amirhosseinmirzaie/nba-players-stats2023-season).
 
 Para este trabalho, a variável dependente (Y) que será utilizada será o *fantasy point* (FP) do jogador, que significa uma pontuação do jogador, não em relação a quantidade de cestas apenas, mas como um *score* individual, que é cumulativo durante todo o campeonato. Dessa forma o projeto é baseado em encontrar o melhor modelo possível para prever qual seria o FP de um jogador da liga, com base nas variáveis encontradas para explicar o FP.
 
-## 3 Importação dos dados
+# Importação dos dados
 
-Carregando pacotes que serão necessárias para a realização do projeto
+## Carregando pacotes que serão necessários para a realização do projeto
 
 ```{r message = FALSE, warning = FALSE}
-library(utils)
 library(MASS)
-library(stargazer)
 library(tidyverse)
 library(car)
 library(ggplot2)
-library(cowplot)
 library(gridExtra)
 library(lmtest)
+library(knitr)
+library(rmarkdown)
+library(htmltools)
 ```
+
+## Transformando o arquivo de dados em dataset e visualizando os dados
+
+```{r}
+dataset <- "C:/Users/mathe/Documents/Unifesp/Materias/IAR/Trabalho final/2023_nba_player_stats.csv"
+data <- read.csv(dataset, sep = ",")
+
+glimpse(data)
+
+paged_table(data)
+```
+
+<br> O banco possui informações de todos os `r nrow(data)` jogadores da NBA e `r ncol(data) - 1` variáveis associadas para cada um, relacionada as estatísticas do player na temporada de 2022-2023, além do nome.
+
+## Separação das variáveis do dataset
+
+```{r}
+Pname <- data$PName
+POS <- data$POS
+Team <- data$Team
+Age <- data$Age
+GP <- data$GP
+W <- data$W
+L <- data$L
+Min <- data$Min
+PTS <- data$PTS
+FGM <- data$FGM
+FGA <- data$FGA
+FG <- data$FG.
+X3PM <- data$X3PM
+X3PA <- data$X3PA
+X3P <- data$X3P.
+FTM <- data$FTM
+FTA <- data$FTA
+FT <- data$FT.
+OREB <- data$OREB
+DREB <- data$DREB
+REB <- data$REB
+AST <- data$AST
+TOV <- data$TOV
+STL <- data$STL
+BLK <- data$BLK
+PF <- data$PF
+FP <- data$FP
+DD2 <- data$DD2
+TD3 <- data$TD3
+X <- data$X
+```
+
+# Análise visual dos dados
+
+Fazendo o plot de algumas variáveis em relação ao *fantasy point*, para verificar de maneira visual algumas variáveis que apresentem não ter relação direta com a variável dependente.
+
+```{r echo = FALSE, fig.width=10, fig.height=8}
+p1 <- ggplot(data, mapping = aes(x=FGM, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Cestas", y = "FP")
+
+p2 <- ggplot(data, mapping = aes(x=POS, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Posição do jogador", y = "FP")
+
+p3 <- ggplot(data, mapping = aes(x=Age, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Idade do jogador", y = "FP")
+
+p4 <- ggplot(data, mapping = aes(x=GP, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Jogos", y = "FP")
+
+p5 <- ggplot(data, mapping = aes(x=W, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Vitórias", y = "FP")
+
+p6 <- ggplot(data, mapping = aes(x=L, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Derrotas", y = "FP")
+
+p7 <- ggplot(data, mapping = aes(x=Min, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Minutos jogados", y = "FP")
+
+p8 <- ggplot(data, mapping = aes(x=FGA, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Tentativas de cesta", y = "FP")
+
+p9 <- ggplot(data, mapping = aes(x=X3PM, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "3 pontos", y = "FP")
+
+p10 <- ggplot(data, mapping = aes(x=X3PA, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Tentativas de 3 pontos", y = "FP")
+
+p11 <- ggplot(data, mapping = aes(x=FTM, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Arremessos livres convertidos", y = "FP")
+
+p12 <- ggplot(data, mapping = aes(x=FTA, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Tentantivas de arremessos livres", y = "FP")
+
+p13 <- ggplot(data, mapping = aes(x=OREB, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Rebotes ofensivos", y = "FP")
+
+p14 <- ggplot(data, mapping = aes(x=REB, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Rebotes", y = "FP")
+
+p15 <- ggplot(data, mapping = aes(x=AST, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Assistências", y = "FP")
+
+p16 <- ggplot(data, mapping = aes(x=DD2, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Duplo-duplo", y = "FP")
+
+p17 <- ggplot(data, mapping = aes(x=TD3, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Triplo-duplo", y = "FP")
+
+p18 <- ggplot(data, mapping = aes(x=STL, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Roubos de bola", y = "FP")
+
+p19 <- ggplot(data, mapping = aes(x=TOV, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Turn-over", y = "FP")
+
+p20 <- ggplot(data, mapping = aes(x=PF, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Faltas", y = "FP")
+
+p21 <- ggplot(data, mapping = aes(x=BLK, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Bloqueios", y = "FP")
+
+plot_list <- list(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16,
+          p17, p18, p19, p20, p21)
+
+grid.arrange(grobs = plot_list, ncol = 3)
+```
+
+<br>
+Com isso, pode-se notar que a posição do jogador e a idade, a quantidade de duplos-duplos e triplos-duplos parecem não ter relação diretas com os *fantasy points* do jogador.
+
+# Modelos de regressão
+
+Partimos agora para buscar o melhor modelo para tentar explicar nossa variável dependente. Uma primeira tentativa é utizar todas as variáveis para termos de onde começar a fase de testes. Dessa forma, utilizaremos todas as variáveis para observar os resultados obtidos
+
+## Primeiro teste
+
+```{r warning = FALSE}
+first_model <- lm(FP ~ GP + W + PTS+ FGM + FGA +
+                  FG + X3PM + X3PA + X3P + FTM +
+                  FTA + FT + OREB + DREB + REB + 
+                  AST + TOV + STL + BLK + PF +
+                  FP, data = data)
+                  
+summary(first_model)
+```
+
+<br>
+Com isso, foi possível observar um R^2^ de 100%, o que apesar de parecer bom, é passivo de dúvidas, pois pode haver multicolinearidade nos dados. Entretanto, muitas variáveis não apresentaram significância no modelo, irá ser utilizado o `stepAIC()` para encontrar um modelo mais ajustado para o problema.
+
+```{r warning = FALSE}
+stepAIC(first_model, direction = "both")
+```
+
+## Segundo teste
+
+Como pode ser visto no passo anterior, um modelo melhor para ser utilizado é
+
+```{r warning = FALSE}
+second_model <- lm(FP ~ PTS + X3PA + OREB + DREB + AST + TOV + STL + 
+                    BLK, data = data)
+
+summary(second_model)
+```
+Neste modelo é possível notar que as variáveis se tornam mais significativas para o modelo, mas ainda há uma sem significância, tentaremos então mais um `stepAIC()`, para verificar se há mais variáveis que podem ser retiradas.
+
+```{r warning = FALSE}
+stepAIC(second_model, direction = "both")
+```
+## Terceiro teste
+
+Como no segundo teste o `stepAIC()` não removeu uma variável não significativa do modelo, retiraremos manualmente.
+
+```{r}
+third_model <- lm(FP ~ PTS + OREB + DREB + AST + TOV + STL + 
+                  BLK, data = data)
+
+summary(third_model)
+```
+
+<br>
+Neste teste todas as variáveis utilizadas foram significativas para o modelo, entretanto ambos R^2^ estão altos demais, o que indica que o modelo possui multicolinearidade nas variáveis explicativas, logo será verificado o VIF (Fator de Inflação de Variância)
+
+```{r}
+vif(third_model)
+```
+
+<br>
+Como evidenciado pelo VIF, algumas variáveis possuem valores muito altos de multicolinearidade, como TOV, AST, DREB e PTS. Dado que o número de *turnovers* é o que possui maior valor, logo ele está sendo redundante cm outra variável que está no modelo, então pode ser retirado sem haver perda de informações.
+
+## Quarto teste
+
+Retirando a variável TOV do modelo, obtemos:
+
+```{r}
+fourth_model <- lm(FP ~ PTS + OREB + DREB + AST + STL + 
+                  BLK, data = data)
+
+summary(fourth_model)
+```
+<br>
+Houve uma pequena diminuição nos valores de R^2^ e do R^2^ ajustado, mas novamente será testada a multicolinearidade das variáveis que ficaram.
+
+```{r}
+vif(fourth_model)
+```
+
+<br>
+Agora a única variável que apresenta um valor vif > 5 é a variável relacionada aos rebotes defensivos do jogador, portanto, ela também será removida do modelo.
+
+## Quinto teste
+
+O modelo sem 'DREB' fica:
+
+```{r}
+fifth_model <- lm(FP ~ PTS + OREB + AST + STL + 
+                  BLK, data = data)
+
+summary(fifth_model)
+```
+
+<br>
+Testanto o vif mais uma vez, para analisar se a multicolinearidade deixou de existir:
+
+```{r}
+vif(fifth_model)
+```
+
+<br>
+Dessa vez sim, agora as variáveis não possuem multicolinearidades e o valor de R^2^ com isso foi impactado, tendo seu valor reduzido. Com isso verificamos uma das pressuposições do modelo. Agora verifiquemos se os resíduos do modelo possuem uma distribuição normal:
+
+```{r}
+shapiro.test(residuals(fifth_model))
+```
+
+<br>
+O p-valor do teste de Shapiro Wilk foi muito pequeno, portanto, não podemos rejeitar a hipótese nula do teste, logo os resíduos não possuem uma distribuição normal.
+Nesse caso, uma tentativa é aplicar o método de BoxCox, de transformação de variável, para testar se assim é possível chegar em um modelo que atende os pressupostos.
+
+### Aplicando a transformação de variável
+
+```{r}
+# Realiza a transformação Box-Cox
+boxcox_result <- boxcox(FP + 2 ~ 1, lambda = seq(-1, 3, 0.1))
+
+# Plota o resultado
+plot(boxcox_result)
+
+z <- max(boxcox_result$y)
+lamb <- boxcox_result$x[boxcox_result$y==z]
+print(lamb)
+
+FP_ajust = (FP ^ lamb - 1) / lamb
+```
+
+## Sexto teste
+
+Aplicando o modelo agora com a variável dependente transformada:
+
+```{r}
+sixth_model <- lm(FP_ajust ~ PTS + OREB + AST + STL + 
+                  BLK, data = data)
+
+summary(sixth_model)
+```
+<br>
+Agora com o *fantasy point* ajustado continuamos com todas as variáveis sendo altamente significativas para explicar o modelo, com um valor de R^2^ ajustado alto. Então será testado novamente os pressupostos. Começando pelo VIF:
+
+```{r}
+vif(sixth_model)
+```
+
+```{r}
+shapiro.test(residuals(sixth_model))
+```
+
+<br>
+Com isso podemos notar que os resíduos continuam sem possuir uma distribuição normal.
+
+## Sétimo teste
+
+Com vários testes a mais que realizei, pude perceber que ao invés de utilizar PTS no modelo, utilizar X3P e FT trazem resultados melhores para explicar a variável dependente além de fazer sentido variáveis que dizem sobre a porcentagem de acerto do jogador qualificarem um FP para o mesmo e a quantidade de jogos também, pois assim jogadores que jogaram muitos jogos e jogadores que jogaram poucos jogoa, serão comparados de forma equivalente. Dessa forma o novo modelo fica:
+
+```{r}
+seventh_model <- lm(FP_ajust ~ GP + X3P + FT + STL + 
+                    DREB + AST + BLK, data = data)
+
+summary(seventh_model)
+```
+<br>
+Verificando os pressupostos:
+
+```{r}
+vif(seventh_model)
+
+shapiro.test(residuals(seventh_model))
+```
+
+<br>
+Verificados dois dos pressupostos, falta agora apenas verificar a homocedasticidade, logo para isso aplica-se o `bptest()`, dessa forma:
+
+```{r}
+bptest(seventh_model)
+```
+
+<br>
+Por fim, o p-valor do teste foi muito baixo, com um valor menor o que 0,05, o que leva a hipótese nula a ser rejeitada, concluindo que o modelo não é homocedástico. E não faz mais sentido fazer uma tranformação de variável novamente, dado que isso já foi feito uma vez.
+
+# Conclusão
+
+# Referências
