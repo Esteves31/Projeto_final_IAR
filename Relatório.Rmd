@@ -1,0 +1,43 @@
+---
+title: "Projeto Final Inferência e Análise de Regressão"
+author: "Matheus Ramos Esteves"
+date: "2023-12-01"
+output: html_document
+---
+## 1 Motivação
+
+Este projeto tem por finalidade realizar uma regressão linear múltipla, e encontrar o melhor modelo possível para a mesma e assim aplicar os conceitos aprendidos em aula durante o segundo semestre de 2023, na turma de IAR (Inferência e Análise de Regressão), ministrada pela Profa. Dra. Flávia cristina Martins Queiroz Mariano.
+
+## 2 Dados utilizados
+
+O conjunto de dados escolhido são referentes aos da temporada 2022-2023 da NBA (*National Basketball Association*), que contém informações referentes a todos os jogadores da liga, como:
+
+- Total de pontos feito pelo jogador na temporada;
+- Idade do jogador;
+- Time que joga;
+- Quantidade de bloqueios do jogador;
+- Quantidade de *turnovers* do jogador;
+- Quantidade de lances livres do jogador;
+- Quantidade de jogos jogados;
+- Quantidade de faltas cometidas;
+
+Tanto a base de dados para download, quanto mais informações sobre a mesma, podem ser encontradas no link a seguir: 
+[Link da Base de Dados](https://www.kaggle.com/datasets/amirhosseinmirzaie/nba-players-stats2023-season).  
+
+Para este trabalho, a variável dependente (Y) que será utilizada será o *fantasy point* (FP) do jogador, que significa uma pontuação do jogador, não em relação a quantidade de cestas apenas, mas como um *score* individual, que é cumulativo durante todo o campeonato. Dessa forma o projeto é baseado em encontrar o melhor modelo possível para prever qual seria o FP de um jogador da liga, com base nas variáveis encontradas para explicar o FP.
+
+## 3 Importação dos dados
+
+Carregando pacotes que serão necessárias para a realização do projeto
+
+```{r message = FALSE, warning = FALSE}
+library(utils)
+library(MASS)
+library(stargazer)
+library(tidyverse)
+library(car)
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(lmtest)
+```
