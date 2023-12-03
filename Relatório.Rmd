@@ -376,5 +376,9 @@ bptest(seventh_model)
 Por fim, o p-valor do teste foi muito baixo, com um valor menor o que 0,05, o que leva a hipótese nula a ser rejeitada, concluindo que o modelo não é homocedástico. E não faz mais sentido fazer uma tranformação de variável novamente, dado que isso já foi feito uma vez.
 
 # Conclusão
+  
+Neste projeto foi buscado compreender a relação de diversas variáveis independentes com os *fantasy points* dos jogadores da NBA através de uma relação linear múltipla. No entanto, apesar dos esforços, com várias tentativas de modelos e a transformação pelo método BoxCox da variável dependente, não foi possível validar todos os pressupostos necessários, visto que a homocedasticidade dos resíduos foi violada. Isso indica que a variabilidade dos erros não é constante em todos os níveis das variáveis independentes, o que compromete a confiabilidade dos das estimativas dos coeficientes e a validade do modelo.  
+Os outros pressupostos foram atendidos satisfatoriamente, exceto pela homocedasticidade, o modelo foi bem especificado em termos de linearidade, independência dos resíduos e normalidade. No entanto, a heterocedasticidade observada é um indicativo de que o modelo atual não é o mais adequado para capturar a complexidade dos dados de FP da NBA. Isso pode ser devido à natureza altamente variável e imprevisível do desempenho dos jogadores, que é influenciado por inúmeros fatores tanto dentro quanto fora da quadra.  
+Portanto, a regresão linear múltipla pode oferecer um ponto de partida para a análise, outros tipos de regressões, não-lineares, por exemplo, podem ser uma boa forma de se conseguir ajustar um bom modelo, com confiabilidade.
 
 # Referências
