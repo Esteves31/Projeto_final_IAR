@@ -34,7 +34,7 @@ O conjunto de dados escolhido são referentes aos da temporada 2022-2023 da NBA 
 
 Tanto a base de dados para download, quanto mais informações sobre a mesma, podem ser encontradas no link a seguir: [Link da Base de Dados](https://www.kaggle.com/datasets/amirhosseinmirzaie/nba-players-stats2023-season).
 
-Para este trabalho, a variável dependente (Y) que será utilizada será o *fantasy point* (FP) do jogador, que significa uma pontuação do jogador, não em relação a quantidade de cestas apenas, mas como um *score* individual, que é cumulativo durante todo o campeonato. Dessa forma o projeto é baseado em encontrar o melhor modelo possível para prever qual seria o FP de um jogador da liga, com base nas variáveis encontradas para explicar o FP.
+Para este trabalho, a variável dependente (Y) que será utilizada será o *fantasy point* (FP) do jogador, que significa uma pontuação do jogador, não em relação a quantidade de cestas apenas, mas como um *score* individual, que é cumulativo durante todo o campeonato. Dessa forma o projeto é baseado em encontrar o melhor modelo possível para prever qual seria o FP de um jogador da liga, com base nas variáveis encontradas para explicar o FP, utilizando uma taxa de 5% de significância.
 
 # Importação dos dados
 
@@ -189,8 +189,20 @@ p21 <- ggplot(data, mapping = aes(x=BLK, y=FP)) +
   geom_point(size = 2.5, pch = 21) +
   labs(x = "Bloqueios", y = "FP")
 
+p22 <- ggplot(data, mapping = aes(x=GP, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Minutos jogados", y = "FP")
+
+p23 <- ggplot(data, mapping = aes(x=Team, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "Time", y = "FP")
+
+p22 <- ggplot(data, mapping = aes(x=GP, y=FP)) + 
+  geom_point(size = 2.5, pch = 21) +
+  labs(x = "", y = "FP")
+
 plot_list <- list(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16,
-          p17, p18, p19, p20, p21)
+          p17, p18, p19, p20, p21, p22, p23)
 
 grid.arrange(grobs = plot_list, ncol = 3)
 ```
@@ -202,7 +214,7 @@ Com isso, pode-se notar que a posição do jogador e a idade, a quantidade de du
 
 Partimos agora para buscar o melhor modelo para tentar explicar nossa variável dependente. Uma primeira tentativa é utizar todas as variáveis para termos de onde começar a fase de testes. Dessa forma, utilizaremos todas as variáveis para observar os resultados obtidos
 
-## Primeiro teste
+## Primeiro modelo
 
 ```{r warning = FALSE}
 first_model <- lm(FP ~ GP + W + PTS+ FGM + FGA +
@@ -215,13 +227,13 @@ summary(first_model)
 ```
 
 <br>
-Com isso, foi possível observar um R^2^ de 100%, o que apesar de parecer bom, é passivo de dúvidas, pois pode haver multicolinearidade nos dados. Entretanto, muitas variáveis não apresentaram significância no modelo, irá ser utilizado o `stepAIC()` para encontrar um modelo mais ajustado para o problema.
+Com isso, foi possível observar um R^2^ de 100%, o que apesar de parecer bom, é passivo de dúvidas, pois pode haver multicolinearidade nos dados. Entretanto, muitas variáveis não apresentaram significância no modelo, irá ser utilizado o `stepAIC()`[^1] para encontrar um modelo mais ajustado para o problema.
 
 ```{r warning = FALSE}
 stepAIC(first_model, direction = "both")
 ```
 
-## Segundo teste
+## Segundo modelo
 
 Como pode ser visto no passo anterior, um modelo melhor para ser utilizado é
 
@@ -231,12 +243,14 @@ second_model <- lm(FP ~ PTS + X3PA + OREB + DREB + AST + TOV + STL +
 
 summary(second_model)
 ```
+
+<br>
 Neste modelo é possível notar que as variáveis se tornam mais significativas para o modelo, mas ainda há uma sem significância, tentaremos então mais um `stepAIC()`, para verificar se há mais variáveis que podem ser retiradas.
 
 ```{r warning = FALSE}
 stepAIC(second_model, direction = "both")
 ```
-## Terceiro teste
+## Terceiro modelo
 
 Como no segundo teste o `stepAIC()` não removeu uma variável não significativa do modelo, retiraremos manualmente.
 
@@ -248,7 +262,7 @@ summary(third_model)
 ```
 
 <br>
-Neste teste todas as variáveis utilizadas foram significativas para o modelo, entretanto ambos R^2^ estão altos demais, o que indica que o modelo possui multicolinearidade nas variáveis explicativas, logo será verificado o VIF (Fator de Inflação de Variância)
+Neste teste todas as variáveis utilizadas foram significativas para o modelo, entretanto ambos R^2^ estão altos demais, o que indica que o modelo possui multicolinearidade nas variáveis explicativas, logo será verificado o VIF (Fator de Inflação de Variância)[^2]
 
 ```{r}
 vif(third_model)
@@ -257,7 +271,7 @@ vif(third_model)
 <br>
 Como evidenciado pelo VIF, algumas variáveis possuem valores muito altos de multicolinearidade, como TOV, AST, DREB e PTS. Dado que o número de *turnovers* é o que possui maior valor, logo ele está sendo redundante cm outra variável que está no modelo, então pode ser retirado sem haver perda de informações.
 
-## Quarto teste
+## Quarto modelo
 
 Retirando a variável TOV do modelo, obtemos:
 
@@ -277,7 +291,7 @@ vif(fourth_model)
 <br>
 Agora a única variável que apresenta um valor vif > 5 é a variável relacionada aos rebotes defensivos do jogador, portanto, ela também será removida do modelo.
 
-## Quinto teste
+## Quinto modelo
 
 O modelo sem 'DREB' fica:
 
@@ -296,7 +310,7 @@ vif(fifth_model)
 ```
 
 <br>
-Dessa vez sim, agora as variáveis não possuem multicolinearidades e o valor de R^2^ com isso foi impactado, tendo seu valor reduzido. Com isso verificamos uma das pressuposições do modelo. Agora verifiquemos se os resíduos do modelo possuem uma distribuição normal:
+Dessa vez sim, agora as variáveis não possuem multicolinearidades e o valor de R^2^ com isso foi impactado, tendo seu valor reduzido. Com isso verificamos uma das pressuposições do modelo. Agora verifiquemos se os resíduos do modelo possuem uma distribuição normal, com o teste de Shapiro Wilk[^3]:
 
 ```{r}
 shapiro.test(residuals(fifth_model))
@@ -312,9 +326,6 @@ Nesse caso, uma tentativa é aplicar o método de BoxCox, de transformação de 
 # Realiza a transformação Box-Cox
 boxcox_result <- boxcox(FP + 2 ~ 1, lambda = seq(-1, 3, 0.1))
 
-# Plota o resultado
-plot(boxcox_result)
-
 z <- max(boxcox_result$y)
 lamb <- boxcox_result$x[boxcox_result$y==z]
 print(lamb)
@@ -322,7 +333,7 @@ print(lamb)
 FP_ajust = (FP ^ lamb - 1) / lamb
 ```
 
-## Sexto teste
+## Sexto modelo
 
 Aplicando o modelo agora com a variável dependente transformada:
 
@@ -346,9 +357,9 @@ shapiro.test(residuals(sixth_model))
 <br>
 Com isso podemos notar que os resíduos continuam sem possuir uma distribuição normal.
 
-## Sétimo teste
+## Sétimo modelo
 
-Com vários testes a mais que realizei, pude perceber que ao invés de utilizar PTS no modelo, utilizar X3P e FT trazem resultados melhores para explicar a variável dependente além de fazer sentido variáveis que dizem sobre a porcentagem de acerto do jogador qualificarem um FP para o mesmo e a quantidade de jogos também, pois assim jogadores que jogaram muitos jogos e jogadores que jogaram poucos jogoa, serão comparados de forma equivalente. Dessa forma o novo modelo fica:
+Com vários testes a mais que realizei, pude perceber que ao invés de utilizar PTS no modelo, utilizar X3P e FT trazem resultados melhores para explicar a variável dependente além de fazer sentido variáveis que dizem sobre a porcentagem de acerto do jogador qualificarem um FP para o mesmo e a quantidade de jogos também, pois assim jogadores que jogaram muitos jogos e jogadores que jogaram poucos jogos, serão comparados de forma equivalente. Dessa forma o novo modelo fica:
 
 ```{r}
 seventh_model <- lm(FP_ajust ~ GP + X3P + FT + STL + 
@@ -366,14 +377,16 @@ shapiro.test(residuals(seventh_model))
 ```
 
 <br>
-Verificados dois dos pressupostos, falta agora apenas verificar a homocedasticidade, logo para isso aplica-se o `bptest()`, dessa forma:
+Verificados dois dos pressupostos, falta agora apenas verificar a homocedasticidade, logo para isso aplica-se o `bptest()`[^4], dessa forma:
 
 ```{r}
 bptest(seventh_model)
 ```
-### Plot 1 {.tabset}
+
+### Plots do modelo {.tabset}
+
 #### Plot 1
-```{r}
+```{r warning = FALSE, message = FALSE}
 fitted_values <- fitted(seventh_model)
 residual_values <- residuals(seventh_model)
 
@@ -388,18 +401,15 @@ ggplot(data, mapping = aes(x = fitted_values, y =  residual_values)) +
 ```
 
 #### Plot 2
-```{r warning=FALSE}
+```{r warning=FALSE, message = FALSE}
 fitted_values <- fitted(seventh_model)
 residual_values <- residuals(seventh_model)
 
 data$fitted_values <- fitted_values
 data$residual_values <- residual_values
 
-ggplot(data, mapping = aes(x = fitted_values, y =  residual_values)) +
-  geom_point() +
-  geom_hline(yintercept = 0, color = "red") +
-  geom_smooth()
-
+par(mfrow = c(2,2))
+plot(seventh_model)
 ```
 
 <br>
@@ -407,8 +417,16 @@ Por fim, o p-valor do teste foi muito baixo, com um valor menor o que 0,05, o qu
 
 # Conclusão
   
-Neste projeto foi buscado compreender a relação de diversas variáveis independentes com os *fantasy points* dos jogadores da NBA através de uma relação linear múltipla. No entanto, apesar dos esforços, com várias tentativas de modelos e a transformação pelo método BoxCox da variável dependente, não foi possível validar todos os pressupostos necessários, visto que a homocedasticidade dos resíduos foi violada. Isso indica que a variabilidade dos erros não é constante em todos os níveis das variáveis independentes, o que compromete a confiabilidade dos das estimativas dos coeficientes e a validade do modelo.  
+Neste projeto foi buscado compreender a relação de diversas variáveis independentes com os *fantasy points* dos jogadores da NBA através de uma relação linear múltipla. No entanto, apesar dos esforços, com várias tentativas de modelos e a transformação pelo método BoxCox da variável dependente, não foi possível validar todos os pressupostos necessários, visto que a homocedasticidade dos resíduos foi violada. Isso indica que a variabilidade dos erros não é constante em todos os níveis das variáveis independentes, o que compromete a confiabilidade das estimativas dos coeficientes e a validade do modelo.  
 Os outros pressupostos foram atendidos satisfatoriamente, exceto pela homocedasticidade, o modelo foi bem especificado em termos de linearidade, independência dos resíduos e normalidade. No entanto, a heterocedasticidade observada é um indicativo de que o modelo atual não é o mais adequado para capturar a complexidade dos dados de FP da NBA. Isso pode ser devido à natureza altamente variável e imprevisível do desempenho dos jogadores, que é influenciado por inúmeros fatores tanto dentro quanto fora da quadra.  
 Portanto, a regresão linear múltipla pode oferecer um ponto de partida para a análise, outros tipos de regressões, não-lineares, por exemplo, podem ser uma boa forma de se conseguir ajustar um bom modelo, com confiabilidade.
 
-# Referências
+# Materiais de apoio
+
+[^1]: Documentação do StepAIC: [StepAIC documentation](https://www.rdocumentation.org/packages/MASS/versions/7.3-58.3/topics/stepAIC);  
+
+[^2]: Fator de inflação de variância (VIF): [VIF documentation](https://www.rdocumentation.org/packages/car/versions/3.1-2/topics/vif);  
+
+[^3]: Teste de Shapiro Wilk: [Shapiro Test documentation](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/shapiro.test);  
+
+[^4]: Breusch-Pagan teste: [Bptest documentation](https://www.rdocumentation.org/packages/lmtest/versions/0.9-40/topics/bptest).
