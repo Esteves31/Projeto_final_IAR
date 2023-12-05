@@ -352,7 +352,7 @@ Com vários testes a mais que realizei, pude perceber que ao invés de utilizar 
 
 ```{r}
 seventh_model <- lm(FP_ajust ~ GP + X3P + FT + STL + 
-                    DREB + AST + BLK, data = data)
+                    DREB + AST + BLK, data = data, na.action = na.exclude)
 
 summary(seventh_model)
 ```
@@ -370,6 +370,36 @@ Verificados dois dos pressupostos, falta agora apenas verificar a homocedasticid
 
 ```{r}
 bptest(seventh_model)
+```
+### Plot 1 {.tabset}
+#### Plot 1
+```{r}
+fitted_values <- fitted(seventh_model)
+residual_values <- residuals(seventh_model)
+
+data$fitted_values <- fitted_values
+data$residual_values <- residual_values
+
+ggplot(data, mapping = aes(x = fitted_values, y =  residual_values)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  geom_smooth()
+
+```
+
+#### Plot 2
+```{r warning=FALSE}
+fitted_values <- fitted(seventh_model)
+residual_values <- residuals(seventh_model)
+
+data$fitted_values <- fitted_values
+data$residual_values <- residual_values
+
+ggplot(data, mapping = aes(x = fitted_values, y =  residual_values)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  geom_smooth()
+
 ```
 
 <br>
